@@ -9,8 +9,8 @@
 import numpy as np
 import pandas as pd
 from scipy.integrate import solve_ivp
-from hlm_models import Model_190, Model_254, Model_190_dam, Model_254_dam
-from tools import read_prm, read_rvr
+from hlm_basic.hlm_models import Model_190, Model_254, Model_190_dam, Model_254_dam
+from hlm_basic.tools import read_prm, read_rvr
 
 
 global_params_190 = [0.33, 0.2, -0.1, 0.33, 0.2, 2.2917e-5]
@@ -93,11 +93,11 @@ class Watershed:
             v_h = global_params[3]          #[m/s]
             k_i_factor =global_params[5]    #[-]
 
-            invtau = 60.0*v_0*pow(A_i, lambda_2) / ((1.0 - lambda_1)*L_i);	 # [1/min]  invtau
-            k_2 = v_h * (L_i / A_h) * 60.0;                                # [1/min] k_2
-            k_i = k_2 * k_i_factor;                                   # [1/min] k_i
-            c_1 = (0.001 / 60.0);                                 # (mm/hr->m/min)  c_1
-            c_2 = A_h / 60.0;                                     # c_2
+            invtau = 60.0*v_0*pow(A_i, lambda_2) / ((1.0 - lambda_1)*L_i)	 # [1/min]  invtau
+            k_2 = v_h * (L_i / A_h) * 60.0                            # [1/min] k_2
+            k_i = k_2 * k_i_factor                                    # [1/min] k_i
+            c_1 = (0.001 / 60.0)                                      # (mm/hr->m/min)  c_1
+            c_2 = A_h / 60.0                                          # c_2
             self.params = [A_i, L_i, A_h, invtau, k_2, k_i, c_1, c_2]
 
     def init_from_file(self, path_rvr, path_prm):
