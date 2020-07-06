@@ -39,16 +39,16 @@ def Model_254(t, y_i, forcing, global_params, params, connectivity):
     
     lambda_1 = global_params[1]     #[-]
     k_3 = global_params[4]          #[1/min]
-    h_b = global_params[6]          #[m]
+    # h_b = global_params[6]          #[m]
     S_L = global_params[7]          #[m]
     A = global_params[8]            #[-]
     B =  global_params[9]           #[-]
     exponent = global_params[10]    #[-]
-    v_B = global_params[11]         #[m/s]
+    # v_B = global_params[11]         #[m/s]
 
-    L = params[1];	#[m]
-    A_h = params[2];	#[m^2]
-    invtau = params[3];	#[1/min]
+    # L = params[1]	#[m]
+    # A_h = params[2]	#[m^2]
+    invtau = params[3]	#[1/min]
     k_2 = params[4] 	#[1/min]
     k_i = params[5] 	#[1/min]
     c_1 = params[6] 
@@ -68,10 +68,10 @@ def Model_254(t, y_i, forcing, global_params, params, connectivity):
     k_t = (A + B*pow_term)*k_2
     
     #Fluxes
-    q_pl = k_2 * s_p;
-    q_pt = k_t * s_p;
-    q_ts = k_i * s_t;
-    q_sl = k_3 * s_s;	#[m/min]
+    q_pl = k_2 * s_p
+    q_pt = k_t * s_p
+    q_ts = k_i * s_t
+    q_sl = k_3 * s_s	#[m/min]
 
     
     q_in = np.array([sum(q[childs]) for childs in connectivity])
@@ -90,16 +90,16 @@ def Model_254_dam(t, y_i, forcing, global_params, params,dam_params, connectivit
     
     lambda_1 = global_params[1]     #[-]
     k_3 = global_params[4]          #[1/min]
-    h_b = global_params[6]          #[m]
+    # h_b = global_params[6]          #[m]
     S_L = global_params[7]          #[m]
     A = global_params[8]            #[-]
     B =  global_params[9]           #[-]
     exponent = global_params[10]    #[-]
-    v_B = global_params[11]         #[m/s]
+    # v_B = global_params[11]         #[m/s]
 
-    L = params[1];	#[m]
-    A_h = params[2];	#[m^2]
-    invtau = params[3];	#[1/min]
+    # L = params[1]	#[m]
+    # A_h = params[2]	#[m^2]
+    invtau = params[3]	#[1/min]
     k_2 = params[4] 	#[1/min]
     k_i = params[5] 	#[1/min]
     c_1 = params[6] 
@@ -112,21 +112,21 @@ def Model_254_dam(t, y_i, forcing, global_params, params,dam_params, connectivit
     print(t, end='\r')
     
     forcing = forcing[t]
-    q = y_i[0:dim];		 #[m^3/s]
+    q = y_i[0:dim]		 #[m^3/s]
     q[q<0] = 0
     S = y_i[dim:2*dim]  # Channel Storage [m^3]
     S[S<0] = 1.000000e-6
-    s_p = y_i[2*dim:3*dim];    #[m]
-    s_t = y_i[3*dim:4*dim];    #[m]
-    s_s = y_i[4*dim:];    #[m] 
+    s_p = y_i[2*dim:3*dim]    #[m]
+    s_t = y_i[3*dim:4*dim]    #[m]
+    s_s = y_i[4*dim:]    #[m] 
     
     pow_term =np.array([(1-st/S_L)**exponent if (1-st/S_L)>0 else 0 for st in s_t])
     k_t = (A + B*pow_term)*k_2
     #Fluxes
-    q_pl = k_2 * s_p;
-    q_pt = k_t * s_p;
-    q_ts = k_i * s_t;
-    q_sl = k_3 * s_s;	#[m/min]
+    q_pl = k_2 * s_p
+    q_pt = k_t * s_p
+    q_ts = k_i * s_t
+    q_sl = k_3 * s_s	#[m/min]
 
     
     q_in = np.array([sum(q[childs]) for childs in connectivity])
@@ -174,14 +174,11 @@ def Model_190_dam(t, y_i, forcing, global_params, params,dam_params, connectivit
 
     q = y_i[0:dim]  #Channel Discharge
     q[q<0] = 1.000000e-6
-    
     S = y_i[dim:2*dim]  # Channel Storage [m^3]
     S[S<0] = 1.000000e-6
-    
     s_p = y_i[2*dim:3*dim]  #Ponded Storage
-    
     s_s = y_i[3*dim:]  #Subsurface Storage
-    
+
     q_pl = k2 * s_p
     q_sl = k3 * s_s
     
@@ -225,30 +222,30 @@ def dam_q(h,gate_state,dam_params):
     
     H_spill = dam_params[1] #Height of the spillway [m]
     H_max = dam_params[2]   #Height of the dam [m]
-    S_max = dam_params[3]   #Maximum volume of water the dam can hold [m3] 
-    alpha = dam_params[4]   #Exponent for bankfull
+    # S_max = dam_params[3]   #Maximum volume of water the dam can hold [m3] 
+    # alpha = dam_params[4]   #Exponent for bankfull
     diam = dam_params[5]    #Diameter of dam orifice [m]
     c1 = dam_params[6]      #Coefficient for discharge from dam
     c2 = dam_params[7]      #Coefficient for discharge from dam
     L_spill = dam_params[8] #Length of the spillway [m].
-    orifice_area = dam_params[9]
-    L_crest = dam_params[10]
+    L_crest = dam_params[9]
+    orifice_area = np.pi*pow(diam,2)/4
     g = 9.81
 
     qs1 = qs2 = qs3 = 0
-    if h<0:h=0
+    if h<0:h=0 # to ensure numerical stability
     if h >= 0 and h <= H_spill:
         if gate_state:
-            qs1 = c1*orifice_area*pow(2 * g*h, .5)
+            qs1 = c1 * orifice_area * pow(2 * g*h, .5)
     elif H_spill < h <= H_max:      ##Consider the case of h < Pipe Diameter
         if gate_state:
-            qs1 = c1*orifice_area*pow(2 * g*h, .5)
-        qs2 = c2*L_spill*pow(h-H_spill, 1.5)
+            qs1 = c1 * orifice_area * pow(2 * g*h, .5)
+        qs2 = c2 * L_spill * pow(h-H_spill, 1.5)
     elif h>H_max:
         if gate_state:
-            qs1 = c1*orifice_area*pow(2 * g*h, .5)
-        qs2 = c2*L_spill*pow(H_max-H_spill, 1.5)
-        qs3 = L_crest*c2*L_spill*pow(h-H_max, 1.5)  #!!!!!!!!!!!!!!!!
+            qs1 = c1 * orifice_area * pow(2 * g*h, .5)
+        qs2 = L_spill * c2 * pow(H_max-H_spill, 1.5)
+        qs3 = L_crest * c2 * pow(h-H_max, 1.5)  #!!!!!!!!!!!!!!!!
     return qs1+qs2+qs3
 
 

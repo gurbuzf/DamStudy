@@ -18,7 +18,7 @@ global_params_190 = [0.33, 0.2, -0.1, 0.33, 0.2, 2.2917e-5]
 global_params_254 = [0.33, 0.2, -0.1, 0.02, 2.0425e-6, 0.02, 0.5, 0.10, 0.0, 99.0, 3.0, 0.75]
 
 class Watershed:
-    def __init__(self, Model=190 ):
+    def __init__(self, Model=190):
         self.indexed_connectivity = None
         self.dam_ids = []
         self.dam_index = []
@@ -101,6 +101,13 @@ class Watershed:
             self.params = [A_i, L_i, A_h, invtau, k_2, k_i, c_1, c_2]
 
     def init_from_file(self, path_rvr, path_prm):
+        ''' Reads rvr and prm files and extracts connectivity ot the river network and 
+            parameters:
+            WARNING: the order of links must be the same in rvr and prm files.
+            INPUT:
+                path_rvr:str, directory of rvr file
+                path_prm:str, directory of prm file
+        '''
         self.links, self.connectivity = read_rvr(path_rvr) 
         self.A_i, self.L_i, self.A_h = read_prm(path_prm) 
         self.dim = len(self.links)
@@ -110,12 +117,19 @@ class Watershed:
         
     
     def init_custom(self, links, connectivity, A_i, L_i, A_h,):
+        ''' initialize watershed object with user defined parameters
+        INPUT:
+            links:list, list of links
+            connectivity:list, list of child links (must be the same order with links)
+            A_i:list, total upstream area [km2]
+            L_i:list, length of links [m]
+            A_h:list, hillslope area [m2] 
+        '''
         self.links = links
         self.connectivity = connectivity
         self.A_i = A_i   #[km2]
         self.L_i = L_i   #[m]
         self.A_h = A_h   #[m2]
-        print("Be sure that A_i:km^2 , L_i:m , A_h:m^2 ")
         self.dim = len(self.links)
         self.indexed_connectivity = self.index_connectivity(self.connectivity, self.links)
         self.nextlink = self.next_link(self.indexed_connectivity, self.dim)
@@ -151,7 +165,7 @@ class Watershed:
         
         if self.modeltype == 190:
             if s_s == None:
-                print('s_s is set to None. All initial conditions for s_s is set to 0!')
+                print('s_s is not given. All initial conditions for s_s is set to 0!')
                 s_s = [0 for _ in range(self.dim)]
             self.__yi = np.array(q + s_p +  s_s)
         
@@ -219,8 +233,8 @@ class Watershed:
         
     def Run_191(self, t_span, forcing, dam_params, t_eval=None, rtol=1e-6):
         
-        if self.__state is None:
-            self.__state = np.zeros(self.dim)
+        # if self.__state is None:
+        #     raise ValueError('state can not be None!')
 
         dam_params = [self.__dam] + dam_params
 
@@ -252,8 +266,8 @@ class Watershed:
     
     def Run_255(self, t_span, forcing, dam_params, t_eval=None, rtol=1e-6):
         
-        if self.__state is None:
-            self.__state = np.zeros(self.dim)
+        # if self.__state is None:
+        #     raise ValueError('Dam state(open:1 close:0) can not be None!')
 
         dam_params = [self.__dam] + dam_params
 
@@ -276,8 +290,7 @@ class Watershed:
         return [str(self.links[i]) for i in range(self.dim)],\
         [str(self.links[i]) for i in self.dam_index]
     
-    
-    
+
     def Get_Snapshot(self):
         ''' Gets last condition of the states from solve_ivp output
         
