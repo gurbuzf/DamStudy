@@ -245,7 +245,7 @@ def dam_q(h,gate_state,dam_params):
         if gate_state:
             qs1 = c1 * orifice_area * pow(2 * g*h, .5)
         qs2 = L_spill * c2 * pow(H_max-H_spill, 1.5)
-        qs3 = L_crest * c2 * pow(h-H_max, 1.5)  #!!!!!!!!!!!!!!!!
+        qs3 = (L_crest-L_spill) * c2 * pow(h-H_max, 1.5)  #!!!!!!!!!!!!!!!!
     return qs1+qs2+qs3
 
 

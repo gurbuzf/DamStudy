@@ -49,12 +49,12 @@ class Watershed:
     @staticmethod
     def index_connectivity(connectivity, links):
         indexed_connectivity =[]
-        for parents in connectivity:
-            if parents==[]:
+        for childs in connectivity:
+            if childs==[]:
                 indexed_connectivity.append([])
             else:
                 l_idx = []
-                for link in parents:
+                for link in childs:
                     l_idx.append(links.index(link))
                 indexed_connectivity.append(l_idx)
         return indexed_connectivity
@@ -202,6 +202,11 @@ class Watershed:
             self.__yi = np.array(q + S_dams.tolist() + s_p + s_t + s_s)
 
     def dam_loc_state(self,states = None):
+        ''' Gets previously given dam ids(link ids where dams are placed) and given states and 
+            convert it into arrays to be able to run the simulations 
+        INPUT:
+            states:list, a list of states(0 or 1), must follow the order in dam_ids
+        '''
         self.__dam = np.zeros(self.dim).astype(int)
         self.__state = np.zeros(self.dim).astype(int)
         self.dam_index = []
@@ -233,8 +238,8 @@ class Watershed:
         
     def Run_191(self, t_span, forcing, dam_params, t_eval=None, rtol=1e-6):
         
-        # if self.__state is None:
-        #     raise ValueError('state can not be None!')
+        if self.__state is None and self.dam_ids==[]:
+            self.__state = np.zeros(self.dim)
 
         dam_params = [self.__dam] + dam_params
 
@@ -266,8 +271,8 @@ class Watershed:
     
     def Run_255(self, t_span, forcing, dam_params, t_eval=None, rtol=1e-6):
         
-        # if self.__state is None:
-        #     raise ValueError('Dam state(open:1 close:0) can not be None!')
+        if self.__state is None and self.dam_ids==[]:
+            self.__state = np.zeros(self.dim)
 
         dam_params = [self.__dam] + dam_params
 
