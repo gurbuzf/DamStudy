@@ -13,7 +13,7 @@ from hlm_basic.hlm_models import Model_190, Model_254, Model_190_dam, Model_254_
 from hlm_basic.tools import read_prm, read_rvr
 
 
-global_params_190 = [0.33, 0.2, -0.1, 0.33, 0.2, 2.2917e-5]
+global_params_190 = [0.33, 0.2, -0.1, 0.33, 0.2, 2.0425e-06]
                    #v_0 lambda_1 lambda_2 v_h  k_3 k_I_factor h_b S_L  A   B    exponent vb
 global_params_254 = [0.33, 0.2, -0.1, 0.02, 2.0425e-6, 0.02, 0.5, 0.10, 0.0, 99.0, 3.0, 0.75]
 
@@ -25,22 +25,22 @@ class Watershed:
         global global_params_190, global_params_254
         
         if Model == 190:
-            self.global_params = global_params_190
+            self.global_params = global_params_190.copy()
             self.modeltype = 190
             print('Model 190 is being used!')
             
         elif Model == 191:
-            self.global_params = global_params_190
+            self.global_params = global_params_190.copy()
             self.modeltype = 191
             print('Model 191(190 with dams) is being used!')
             
         elif Model == 254:
-            self.global_params = global_params_254
+            self.global_params = global_params_254.copy()
             self.modeltype = 254
             print('Model 254 is being used!')
             
         elif Model == 255:
-            self.global_params = global_params_254
+            self.global_params = global_params_254.copy()
             self.modeltype = 255
             print('Model 255 (254 with_dams) is being used!')
         else: 
