@@ -1,7 +1,6 @@
 /__pycache__
 .ipynb_checkpoints
 .vscode
-/dam_operation
 /hlm_basic.egg-info
 /data/asynch/ssn6_254.dat
 data/asynch/ssn6_190.dat

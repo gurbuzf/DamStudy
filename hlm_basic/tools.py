@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from  matplotlib import rcParams
 
 def read_rvr(path):
     rvr = []
@@ -98,3 +100,62 @@ def Set_InitialConditions(qmin, At_up, A_up, k3=340):
     s_s = [ss for _ in range(dim)]
 
     return q, s_p, s_t, s_s
+
+
+
+def plot_sim(link_id, forcing, results, plt_kwargs,d_type='discharge',discharge_axis=None, area=None, save=None):
+    '''Plots simulation results
+    
+    INPUT:
+        links_id:int, link id for which hydrograph or storage (if a dam exists) to be plotted
+        forcing:list, minute-based precipitation data
+        results:list, includes pd.DataFrames which are output of hlm_basic
+        plt_kwargs:list, includes pyplot kwargs. kwargs dictionaries must follow the order of results
+        d_type:'discharge' or 'storage', type of the data
+        discharge_axis:(optional) list, to customize discharge axis [min, max, stepsize]
+        area:(optional) float, upstream aream of correspoding link,us to show mean annual flood level
+        save:(optional) str, save name (with or without full path)
+    '''
+
+    rcParams.update({'font.size': 13,'axes.labelweight':'bold','axes.labelsize':14,\
+                            'ytick.major.size':6,'xtick.major.size':6,'xtick.direction':'in','ytick.direction':'in',\
+                            'lines.linewidth':2.5})
+    kwargs = plt_kwargs.copy()
+    fig, ax = plt.subplots(2, 1,figsize=(20, 6), gridspec_kw={'height_ratios':[1, 3]}, sharex=True)
+
+    ax[0].plot(range(len(forcing)), forcing, alpha=1, color='b')
+    ax[0].set_ylim([max(forcing)*1.1, 0])
+    ax[0].set_ylabel('Rainfall \n[mm/hr]')
+    ax[0].grid()
+    j=0
+    for result in results:
+        ax[1].plot(result.index, result[str(link_id)].values, **kwargs[j])
+        j += 1
+    if d_type == 'discharge':
+        ax[1].set(xlabel='Time[min]', ylabel='Discharge[m$^3$/s]')
+        ax[1].set_xlim([0, len(forcing)])
+        leg_title = 'LINK'
+        if discharge_axis is not None:
+            start = discharge_axis[0]
+            end = discharge_axis[1]
+            step =discharge_axis[2]
+            ax[1].set_ylim([start, end])
+            ax[1].set_yticks(np.arange(start, end, step))
+        if area is not None:
+            maf = round(3.12 * area**0.57 , 2)
+            ax[1].axhline(y=maf, c='r', linestyle='dashed', linewidth=2)
+            ax[1].text(10000, maf, f'Mean Annual Flood = {maf} m$^3$/s', va='bottom', ha='center')
+
+    elif d_type == 'storage':
+        ax[1].set(xlabel='Time[min]', ylabel='Storage[10$^3$ m$^3$]')
+        ax[1].set_xlim([0, len(forcing)])
+        ax[1].set_ylim([-5, 250000])
+        ax[1].axhline(y=200000, c='r', linestyle='dashed', linewidth=2)
+        ax[1].set_yticks(np.arange(0, 250000, 50000))
+        ax[1].set_yticklabels(np.arange(0, 250, 50))
+        leg_title = 'DAM'
+    ax[1].legend(title=leg_title+f': {link_id}')
+    ax[1].grid()
+    plt.subplots_adjust(hspace=0)
+    if save is not None:
+        fig.savefig(save + '.png',bbox_inches = 'tight', pad_inches = 0.5)

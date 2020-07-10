@@ -237,15 +237,18 @@ def dam_q(h,gate_state,dam_params):
     if h >= 0 and h <= H_spill:
         if gate_state:
             qs1 = c1 * orifice_area * pow(2 * g*h, .5)
+
     elif H_spill < h <= H_max:      ##Consider the case of h < Pipe Diameter
         if gate_state:
             qs1 = c1 * orifice_area * pow(2 * g*h, .5)
         qs2 = c2 * L_spill * pow(h-H_spill, 1.5)
+
     elif h>H_max:
         if gate_state:
             qs1 = c1 * orifice_area * pow(2 * g*h, .5)
         qs2 = L_spill * c2 * pow(H_max-H_spill, 1.5)
         qs3 = (L_crest-L_spill) * c2 * pow(h-H_max, 1.5)  #!!!!!!!!!!!!!!!!
+        
     return qs1+qs2+qs3
 
 
