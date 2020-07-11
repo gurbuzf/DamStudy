@@ -1,4 +1,5 @@
 import numpy as np
+import math
 import warnings
 
 def Model_190(t, y_i, forcing, global_params, params, connectivity):
@@ -232,13 +233,22 @@ def dam_q(h,gate_state,dam_params):
     orifice_area = np.pi*pow(diam,2)/4
     g = 9.81
 
-    qs1 = qs2 = qs3 = 0
+    qs0 = qs1 = qs2 = qs3 = 0
     if h<0:h=0 # to ensure numerical stability
-    if h >= 0 and h <= H_spill:
+
+    if h < diam:  ## the case of h < Pipe Diameter
+        if gate_state:
+            r = diam / 2.0
+            frac = (h-r) / r
+            # frac = (h < 2 * r) ? (h - r) / r : 1.0; # From Asynch C code. ????
+            A = -r*r*(math.acos(frac) - pow(1 - frac*frac, .5)*frac - np.pi)
+            qs0 = c1*A*pow(2 * g*h, .5)
+
+    elif h >= diam and h <= H_spill:
         if gate_state:
             qs1 = c1 * orifice_area * pow(2 * g*h, .5)
 
-    elif H_spill < h <= H_max:      ##Consider the case of h < Pipe Diameter
+    elif H_spill < h <= H_max:     
         if gate_state:
             qs1 = c1 * orifice_area * pow(2 * g*h, .5)
         qs2 = c2 * L_spill * pow(h-H_spill, 1.5)
@@ -249,7 +259,7 @@ def dam_q(h,gate_state,dam_params):
         qs2 = L_spill * c2 * pow(H_max-H_spill, 1.5)
         qs3 = (L_crest-L_spill) * c2 * pow(h-H_max, 1.5)  #!!!!!!!!!!!!!!!!
         
-    return qs1+qs2+qs3
+    return qs0+qs1+qs2+qs3
 
 
 
