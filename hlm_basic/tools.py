@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from  matplotlib import rcParams
+from matplotlib.lines import Line2D
 
 def read_rvr(path):
     rvr = []
@@ -103,20 +104,20 @@ def Set_InitialConditions(qmin, At_up, A_up, k3=340):
 
 
 
-def plot_sim(link_id, forcing, results, plt_kwargs,d_type='discharge',discharge_axis=None, area=None, save=None):
+def plot_sim(link_ids, forcing, results, plt_kwargs,d_type='discharge',discharge_axis=None, area=None, save=None):
     '''Plots simulation results
     
     INPUT:
-        links_id:int, link id for which hydrograph or storage (if a dam exists) to be plotted
+        links_ids:int or list, link ids for which hydrograph or storage (if a dam exists) to be plotted
         forcing:list, minute-based precipitation data
         results:list, includes pd.DataFrames which are output of hlm_basic
         plt_kwargs:list, includes pyplot kwargs. kwargs dictionaries must follow the order of results
         d_type:'discharge' or 'storage', type of the data
         discharge_axis:(optional) list, to customize discharge axis [min, max, stepsize]
-        area:(optional) float, upstream aream of correspoding link,us to show mean annual flood level
+        area:(optional) float, upstream aream of correspoding link,use to show mean annual flood level
         save:(optional) str, save name (with or without full path)
     '''
-
+    
     rcParams.update({'font.size': 13,'axes.labelweight':'bold','axes.labelsize':14,\
                             'ytick.major.size':6,'xtick.major.size':6,'xtick.direction':'in','ytick.direction':'in',\
                             'lines.linewidth':2.5})
@@ -128,13 +129,15 @@ def plot_sim(link_id, forcing, results, plt_kwargs,d_type='discharge',discharge_
     ax[0].set_ylabel('Rainfall \n[mm/hr]')
     ax[0].grid()
     j=0
+    if type(link_ids) != list: link_ids =[link_ids]
     for result in results:
-        ax[1].plot(result.index, result[str(link_id)].values, **kwargs[j])
+        for link_id in link_ids:
+            ax[1].plot(result.index, result[str(link_id)].values, **kwargs[j])
         j += 1
     if d_type == 'discharge':
         ax[1].set(xlabel='Time[min]', ylabel='Discharge[m$^3$/s]')
         ax[1].set_xlim([0, len(forcing)])
-        leg_title = 'LINK'
+        # leg_title = 'LINK'
         if discharge_axis is not None:
             start = discharge_axis[0]
             end = discharge_axis[1]
@@ -153,9 +156,17 @@ def plot_sim(link_id, forcing, results, plt_kwargs,d_type='discharge',discharge_
         ax[1].axhline(y=200000, c='r', linestyle='dashed', linewidth=2)
         ax[1].set_yticks(np.arange(0, 250000, 50000))
         ax[1].set_yticklabels(np.arange(0, 250, 50))
-        leg_title = 'DAM'
-    ax[1].legend(title=leg_title+f': {link_id}')
+        # leg_title = 'DAM'
+    #legend
+    colors = []
+    labels = []
+    for i in range(len(plt_kwargs)):
+        colors.append(plt_kwargs[i]['color'])
+        labels.append(plt_kwargs[i]['label'])
+    lines = [Line2D([0], [0], color=c) for c in colors]
+    ax[1].legend(lines, labels, loc='upper left')
+
     ax[1].grid()
     plt.subplots_adjust(hspace=0)
     if save is not None:
-        fig.savefig(save + '.png',bbox_inches = 'tight', pad_inches = 0.5)
+        fig.savefig(save + '.png',)#bbox_inches = 'tight', pad_inches = 0.5)

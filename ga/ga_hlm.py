@@ -148,7 +148,7 @@ def MutateOffspring(offsprings, method='bitflip', p=0.05):
             r = np.random.random()
             if r < p:
                 idx = np.random.randint(0,n_genes)
-                offspring[idx] = 0 if offspring[idx] else 1; # simple bit-swap
+                offspring[idx] = 0 if offspring[idx] else 1 # simple bit-swap
 
     elif method == 'swap':
         for offspring in offsprings_mutated:
