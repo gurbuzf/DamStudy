@@ -9,7 +9,7 @@
 import numpy as np
 import pandas as pd
 from scipy.integrate import solve_ivp
-from hlm_basic.hlm_models import Model_190, Model_254, Model_190_dam, Model_254_dam
+from hlm_basic.hlm_models import Model_190, Model_254, Model_190_dam, Model_254_dam, Model_254_dam_varParam
 from hlm_basic.tools import read_prm, read_rvr
 
 
@@ -43,6 +43,10 @@ class Watershed:
             self.global_params = global_params_254.copy()
             self.modeltype = 255
             print('Model 255 (254 with_dams) is being used!')
+        elif Model == 256:
+            self.global_params = global_params_254.copy()
+            self.modeltype = 256
+            print('Model 256 (254 with_dams) is being used!')
         else: 
             self.global_params = None
 
@@ -85,7 +89,7 @@ class Watershed:
             c_2 = (1.0 - RC)*(0.001 / 60.0)	#(mm/hr->m/min)  c_2
             self.params = [A_i, L_i, A_h, k2, k3, invtau, c_1, c_2]
             
-        elif self.modeltype == 254 or self.modeltype == 255:
+        elif self.modeltype == 254 or self.modeltype == 255 or self.modeltype == 256:
             global_params = self.global_params
             v_0 = global_params[0]          #[m/s]
             lambda_1 = global_params[1]     #[-]
@@ -188,7 +192,7 @@ class Watershed:
                 s_t = [0 for _ in range(self.dim)]
             self.__yi = np.array(q + s_p + s_t + s_s)
         
-        elif self.modeltype == 255:     
+        elif self.modeltype == 255 or self.modeltype == 256:     
             S_dams = np.zeros(self.dim)
             if self.dam_ids != []:
                 j = 0
@@ -202,7 +206,7 @@ class Watershed:
             self.__yi = np.array(q + S_dams.tolist() + s_p + s_t + s_s)
 
     def dam_loc_state(self,states = None):
-        ''' Gets previously given dam ids(link ids where dams are placed) and given states and 
+        ''' Gets previously given dam ids(link ids where dams are located) and given states and 
             convert it into arrays to be able to run the simulations 
         INPUT:
             states:list, a list of states(0 or 1), must follow the order in dam_ids
@@ -224,6 +228,63 @@ class Watershed:
             else:    
                 print('No dam is set!')
             pass
+
+    def set_dam_state(self, states=None):
+        ''' Gets previously given dam ids(link ids where dams are located) and given states and 
+            convert it into arrays to be able to run the simulations 
+        INPUT:
+            states:list, a list of states(0 or 1), must follow the order in dam_ids
+        '''
+        self.__dam = np.zeros(self.dim).astype(int)
+        self.__state = np.zeros(self.dim).astype(int)
+        self.dam_index = []
+        j=0
+        if self.dam_ids != []:
+            for i in self.dam_ids:
+                idx = self.links.index(i)
+                self.dam_index.append(idx)
+                self.__dam[idx] = 1        
+                self.__state[idx] = states[j]
+                j+=1
+        else:
+            if states is not None:
+                print("No dam is set! Given states will be ignored.")
+            else:    
+                print('No dam is set!')
+            pass
+
+    def init_dam_params256(self, h_spill,h_max, s_max, alpha, diameter, c_1, c_2, l_spill, l_crest):
+        ''' Returns an nested list of dam parameters to be used in the model runs
+
+        '''
+        H_spill = np.zeros(self.dim)
+        H_max = np.zeros(self.dim)
+        S_max = np.zeros(self.dim)
+        _alpha = np.zeros(self.dim)
+        diam = np.zeros(self.dim)
+        c1 = np.zeros(self.dim)
+        c2 = np.zeros(self.dim)
+        L_spill = np.zeros(self.dim)
+        L_crest = np.zeros(self.dim)
+        j = 0
+        if self.dam_ids != []:
+            for i in self.dam_ids:
+                idx = self.links.index(i)
+                H_spill[idx] = h_spill[j] 
+                H_max[idx] = h_max[j]
+                S_max[idx] = s_max[j]
+                _alpha[idx] = alpha[j]
+                diam[idx] = diameter[j]
+                c1[idx] = c_1[j]
+                c2[idx] = c_2[j]
+                L_spill[idx] = l_spill[j]
+                L_crest[idx] = l_crest[j]
+                j += 1
+        else:
+            print('No dam is set!')
+        dam_params = [H_spill, H_max, S_max, _alpha, diam, c1, c2, L_spill, L_crest]
+        return dam_params
+
         
     def Run_190(self, t_span, forcing, t_eval=None, rtol=1e-6):
         
@@ -269,7 +330,7 @@ class Watershed:
         
         return streamflow
     
-    def Run_255(self, t_span, forcing, dam_params, t_eval=None, rtol=1e-6):
+    def Run_255(self, t_span, forcing, dam_params, t_eval=None, rtol=1e-6, method='RK45'):
         
         if self.__state is None and self.dam_ids==[]:
             self.__state = np.zeros(self.dim)
@@ -278,7 +339,27 @@ class Watershed:
 
         self.sol = solve_ivp(Model_254_dam, t_span, t_eval = t_eval, y0 = self.__yi, 
                         args=(forcing, self.global_params, self.params, dam_params, 
-                        self.indexed_connectivity, self.nextlink, self.__state), rtol = rtol)
+                        self.indexed_connectivity, self.nextlink, self.__state), rtol = rtol, method=method)
+        
+        discharge = self.sol.y.T[:, 0:self.dim]
+        dam_storage = self.sol.y[self.dim:2*self.dim, :][self.dam_index].T
+        
+        col1, col2 = self.__columns__()
+        streamflow  = pd.DataFrame(discharge, index = self.sol.t, columns=col1)
+        storage  = pd.DataFrame(dam_storage, index = self.sol.t, columns=col2)
+
+        return streamflow, storage
+
+    def Run_256(self, t_span, forcing, dam_params, t_eval=None, rtol=1e-6, method='RK45'):
+        
+        if self.__state is None and self.dam_ids==[]:
+            self.__state = np.zeros(self.dim)
+
+        dam_params = [self.__dam] + dam_params
+
+        self.sol = solve_ivp(Model_254_dam_varParam, t_span, t_eval = t_eval, y0 = self.__yi, 
+                        args=(forcing, self.global_params, self.params, dam_params, 
+                        self.indexed_connectivity, self.nextlink, self.__state), rtol = rtol, method=method)
         
         discharge = self.sol.y.T[:, 0:self.dim]
         dam_storage = self.sol.y[self.dim:2*self.dim, :][self.dam_index].T
@@ -313,7 +394,7 @@ class Watershed:
                 s_s = self.sol.y.T[:, 3*self.dim:4*self.dim][-1].tolist()
                 return q, S, s_p, s_s
             
-            elif self.modeltype == 255:
+            elif self.modeltype == 255 or self.modeltype==256:
                 q = self.sol.y.T[:, 0:self.dim][-1].tolist()
                 S = self.sol.y[self.dim:2*self.dim, :][self.dam_index].T[-1].tolist()
                 s_p = self.sol.y.T[:, 2*self.dim:3*self.dim][-1].tolist()

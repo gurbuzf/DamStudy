@@ -14,6 +14,7 @@ def InitialPopulation(n_chromosomes, n_genes):
     with a size of (n_chromosomes, n_genes)
     '''
     init_pop = np.random.randint(low=0, high=2, size = (n_chromosomes, n_genes))
+    np.random.shuffle(init_pop)
     init_pop[0] = np.array([1 for _ in range(n_genes)])
     return init_pop
 
@@ -23,14 +24,19 @@ def MatingPoolSelection(population, fitnesses, n_parents=None, selection='best',
     WARNING: This code is based on higher fitness values. If minimization problem is the case, arrange 'fitnesses' array accordingly.
              Be carefull when using tournament selection. It can get stuck in an infinite loop in some cases. 
     INPUT:
+
         population: 2D np array, size:(n_chromosomes, n_genes)
+
         fitnesses : a np vector, size:(1, n_chromosomes), includes fitnesses of individuals(chromosomes)
+
         n_parents: int, default:population.shape[0]/2 (floor if even), number of parents to be selected
+
         selection: str, default:'best', parent selection algorithms, 
                     options: best, selects best individuals from population for mating
                              roulette: selects individuals using Roulette Wheel Selection algorithm
                              tournament : selects individuals using K-way tournament selection algorithm 
                              rank : simple linear selection algoritm   
+                             
         k: int, default:3, number of individuals in tournament
     '''
     N = population.shape[0]
@@ -48,6 +54,7 @@ def MatingPoolSelection(population, fitnesses, n_parents=None, selection='best',
             offset = fitnesses.min()
             fitness_offset = fitnesses + abs(offset)
         total_fitness = np.sum(fitness_offset)
+        #TODO: probaility calculation may results in Error. Sometime P becomes None when total_fitness is zeor
         relative_fitness = fitness_offset/total_fitness
         indices = np.random.choice(N, n_parents, p=relative_fitness, replace=False)
 
@@ -76,11 +83,15 @@ def Crossover(parents, operator='onepoint'):
     
     INPUT:
         parents:2D np array, output of 'MatingPoolSelection'
+
         operator:str, default:'onepoint', crossover method
+
                 options: onepoint,  a point is randomly selected and the tails of 
                                     the two parents are swapped to produce offsprings
+
                         multipoint, three points are randomly selected and segments are 
                                     combined to get a new offspring
+
                         uniform, each gene of two parents are separately decided whether
                                     to put into the offspring. Ex. flipping coin for each gene
     '''
@@ -132,7 +143,9 @@ def MutateOffspring(offsprings, method='bitflip', p=0.05):
 
     INPUT:
         offsprings : 2D np array, output of 'Crossover'
+
         p:float, default:0.05, mutation occurs with a probability of p [0<p<1]
+
         method:str, default:'bitflip' , mutation method
                     options: bitflip, bit-wise mutation
                              swap,  swaps two randomly selected genes in the chromosome

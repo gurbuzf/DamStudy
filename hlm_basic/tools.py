@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from  matplotlib import rcParams
+from matplotlib.pyplot import savefig
 from matplotlib.lines import Line2D
 
 def read_rvr(path):
@@ -104,7 +105,7 @@ def Set_InitialConditions(qmin, At_up, A_up, k3=340):
 
 
 
-def plot_sim(link_ids, forcing, results, plt_kwargs,d_type='discharge',discharge_axis=None, area=None, save=None):
+def plot_sim(link_ids, forcing, results, plt_kwargs,d_type='discharge',discharge_axis=None, area=None, save=None, max_storage=None):
     '''Plots simulation results
     
     INPUT:
@@ -120,7 +121,7 @@ def plot_sim(link_ids, forcing, results, plt_kwargs,d_type='discharge',discharge
     
     rcParams.update({'font.size': 13,'axes.labelweight':'bold','axes.labelsize':14,\
                             'ytick.major.size':6,'xtick.major.size':6,'xtick.direction':'in','ytick.direction':'in',\
-                            'lines.linewidth':2.5})
+                            'lines.linewidth':3.5})
     kwargs = plt_kwargs.copy()
     fig, ax = plt.subplots(2, 1,figsize=(20, 6), gridspec_kw={'height_ratios':[1, 3]}, sharex=True)
 
@@ -152,12 +153,12 @@ def plot_sim(link_ids, forcing, results, plt_kwargs,d_type='discharge',discharge
     elif d_type == 'storage':
         ax[1].set(xlabel='Time[min]', ylabel='Storage[10$^3$ m$^3$]')
         ax[1].set_xlim([0, len(forcing)])
-        ax[1].set_ylim([-5, 250000])
-        ax[1].axhline(y=200000, c='r', linestyle='dashed', linewidth=2)
-        ax[1].set_yticks(np.arange(0, 250000, 50000))
-        ax[1].set_yticklabels(np.arange(0, 250, 50))
-        # leg_title = 'DAM'
-    #legend
+        if max_storage is not None:
+            ax[1].set_ylim([-5, max_storage+50000])
+            ax[1].axhline(y=max_storage, c='r', linestyle='dashed', linewidth=2)
+            ax[1].set_yticks(np.arange(0,max_storage+50000,100000))
+            ax[1].set_yticklabels(np.arange(0,int((max_storage+50000)/1000), 100))
+
     colors = []
     labels = []
     for i in range(len(plt_kwargs)):
@@ -169,4 +170,4 @@ def plot_sim(link_ids, forcing, results, plt_kwargs,d_type='discharge',discharge
     ax[1].grid()
     plt.subplots_adjust(hspace=0)
     if save is not None:
-        fig.savefig(save + '.png',)#bbox_inches = 'tight', pad_inches = 0.5)
+        fig.savefig(save + '.png',bbox_inches = 'tight', pad_inches = 0.5)
