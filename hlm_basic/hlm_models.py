@@ -235,7 +235,7 @@ def Model_254_dam_varParam(t, y_i, forcing, global_params, params, dam_params, c
             l_crest = L_crest[idx]
             h = h_max * pow(S[idx] / s_max, alpha[idx])
             q_in = 60 * q[idx]      #[m3/s->m3/min]
-            q_out = 60 * dam_q_varParam(h, gate_state[idx],h_spill, h_max, diameter, c1, c2, l_spill, l_crest) #[m3/s->m3/min]
+            q_out = 60 * dam_q_varParam_varState(h, gate_state[idx],h_spill, h_max, diameter, c1, c2, l_spill, l_crest) #[m3/s->m3/min]
             dS[idx] = q_in - q_out
             # print('next',nextlink[idx])
             if nextlink[idx] !=-1:
@@ -360,6 +360,59 @@ def dam_q_varParam(h,gate_state,h_spill, h_max, diameter, c_1, c_2, l_spill, l_c
     l_spill :Length of the spillway [m].
     l_crest : dam_params[9]
     '''
+    open_rate = state * diameter
+    orifice_area = np.pi*pow(diameter,2)/4
+    g = 9.80665
+
+    qs0 = qs1 = qs2 = qs3 = 0
+    if h<0:h=0 # to ensure numerical stability
+
+    if h < diameter:  ## the case of h < Pipe Diameter
+        if gate_state:
+            r = diameter / 2.0
+            frac = (h-r) / r
+            # frac = (h < 2 * r) ? (h - r) / r : 1.0; # From Asynch C code. ????
+            A = -r*r*(math.acos(frac) - pow(1 - frac*frac, .5)*frac - np.pi)
+            qs0 = c_1*A*pow(2 * g*h, .5)
+
+    elif h >= diameter and h <= h_spill:
+        if gate_state:
+            qs1 = c_1 * orifice_area * pow(2 * g*h, .5)
+
+    elif h_spill < h <= h_max:     
+        if gate_state:
+            qs1 = c_1 * orifice_area * pow(2 * g*h, .5)
+        qs2 = c_2 * l_spill * pow(h-h_spill, 1.5)
+
+    elif h>h_max:
+        if gate_state:
+            qs1 = c_1 * orifice_area * pow(2 * g*h, .5)
+        qs2 = l_spill * c_2 * pow(h-h_spill, 1.5)
+        qs3 = (l_crest-l_spill) * c_2 * pow(h-h_max, 1.5)  #!!!!!!!!!!!!!!!!
+        
+
+
+        # qs1 = c1 * orifice_area * pow(2 * g*h, .5)
+        # qs2 = L_spill * c2 * pow(h-H_spill, 1.5)
+        # qs3 = (L_crest-L_spill) * c2 * pow(h-H_max, 1.5)  #!!!!!!!!!!!!!!!!
+    return qs0+qs1+qs2+qs3
+
+def dam_q_varParam_varState(h,gate_state,h_spill, h_max, diam, c_1, c_2, l_spill, l_crest):    
+    '''
+    h_spill: Height of the spillway [m]
+    h_max : Height of the dam [m]
+    s_max : dam_params[3]   #Maximum volume of water the dam can hold [m3] 
+    alpha : Exponent for bankfull
+    diameter : #Diameter of dam orifice [m]
+    c_1 : Coefficient for discharge from dam
+    c_2 :Coefficient for discharge from dam
+    l_spill :Length of the spillway [m].
+    l_crest : dam_params[9]
+    '''
+    
+
+    diameter = gate_state * diam
+
     orifice_area = np.pi*pow(diameter,2)/4
     g = 9.80665
 

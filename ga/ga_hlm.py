@@ -18,6 +18,16 @@ def InitialPopulation(n_chromosomes, n_genes):
     init_pop[0] = np.array([1 for _ in range(n_genes)])
     return init_pop
 
+def InitialPopulation2(n_chromosomes, n_genes):
+    '''
+    Returns a 2D numpy array consisting of numbers in [0, 0.25, 0.50, 0.75, 1.0] 
+    with a size of (n_chromosomes, n_genes)
+    '''
+    init_pop = np.random.choice([0, 0.25, 0.50, 0.75, 1], size=(n_chromosomes, n_genes))
+    np.random.shuffle(init_pop)
+    init_pop[0] = np.array([1 for _ in range(n_genes)])
+    return init_pop
+
 def MatingPoolSelection(population, fitnesses, n_parents=None, selection='best', k=3):
     ''' Returns parents for cross-over
     
