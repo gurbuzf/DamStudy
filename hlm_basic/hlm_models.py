@@ -160,6 +160,10 @@ def Model_254_dam(t, y_i, forcing, global_params, params,dam_params, connectivit
 
 
 def Model_254_dam_varParam(t, y_i, forcing, global_params, params, dam_params, connectivity, nextlink, gate_state):
+    """
+    This is for model 256. Dam parameters can be variable. In addition,state of the dam can be any float between 0 and 1
+    """
+
     dim = len(connectivity)
     
     lambda_1 = global_params[1]     #[-]
@@ -360,7 +364,6 @@ def dam_q_varParam(h,gate_state,h_spill, h_max, diameter, c_1, c_2, l_spill, l_c
     l_spill :Length of the spillway [m].
     l_crest : dam_params[9]
     '''
-    open_rate = state * diameter
     orifice_area = np.pi*pow(diameter,2)/4
     g = 9.80665
 

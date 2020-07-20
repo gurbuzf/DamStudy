@@ -235,7 +235,11 @@ class Watershed:
         INPUT:
             states:list, a list of states(0 or 1), must follow the order in dam_ids
         '''
-        self.__dam = np.zeros(self.dim).astype(int)
+        if self.modeltype ==256:
+            self.__dam = np.zeros(self.dim).astype(float)
+        else:
+            self.__dam = np.zeros(self.dim).astype(int)
+
         self.__state = np.zeros(self.dim).astype(int)
         self.dam_index = []
         j=0
