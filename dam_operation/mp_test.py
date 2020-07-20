@@ -168,7 +168,7 @@ if __name__ == "__main__":
             generation = 0
             while generation<10: # generation
                
-                arguments = [[SSN5, dam_state, t0, forcing, dam_params256, 120] for dam_state in population]
+                arguments = [[SSN5, dam_state, t0, forcing, dam_params256, 60] for dam_state in population]
                 results = []
                 for argument in arguments:
                     results.append(RunSimulation(argument))
@@ -202,9 +202,9 @@ if __name__ == "__main__":
 
     path = '/Users/gurbuz/Supp_DamStudy/'
 
-    s_name = '_test1_LD_300_120_U60' 
+    s_name = '_test1_LD_300_60_U60' 
     pltkwargs = np.array([{'label':'nodam', 'color':'#1AFF1A'}, {'label':'passive', 'color':'#000000',}, 
-                        {'label':'GA', 'color':'magenta','alpha':1.0, 'linestyle':'dashdot', 'linewidth':3}])
+                        {'label':'GA', 'color':'magenta','alpha':1.0}])
     pltKwargs = pltkwargs[[0,1,2]]
     dataset = [dc_nodam, dc_passive, dc_ga]
     plot_sim(0, forcing, dataset, pltKwargs, d_type='discharge', discharge_axis=[0,225,50], area=60.75, save=path + 'Hydro0'+s_name)
