@@ -423,25 +423,22 @@ def dam_q_varParam_varState(h,gate_state,h_spill, h_max, diam, c_1, c_2, l_spill
     if h<0:h=0 # to ensure numerical stability
 
     if h < diameter:  ## the case of h < Pipe Diameter
-        if gate_state:
-            r = diameter / 2.0
-            frac = (h-r) / r
-            # frac = (h < 2 * r) ? (h - r) / r : 1.0; # From Asynch C code. ????
-            A = -r*r*(math.acos(frac) - pow(1 - frac*frac, .5)*frac - np.pi)
-            qs0 = c_1*A*pow(2 * g*h, .5)
+        
+        r = diameter / 2.0
+        frac = (h-r) / r
+        # frac = (h < 2 * r) ? (h - r) / r : 1.0; # From Asynch C code. ????
+        A = -r*r*(math.acos(frac) - pow(1 - frac*frac, .5)*frac - np.pi)
+        qs0 = c_1*A*pow(2 * g*h, .5)
 
     elif h >= diameter and h <= h_spill:
-        if gate_state:
-            qs1 = c_1 * orifice_area * pow(2 * g*h, .5)
+        qs1 = c_1 * orifice_area * pow(2 * g*h, .5)
 
     elif h_spill < h <= h_max:     
-        if gate_state:
-            qs1 = c_1 * orifice_area * pow(2 * g*h, .5)
+        qs1 = c_1 * orifice_area * pow(2 * g*h, .5)
         qs2 = c_2 * l_spill * pow(h-h_spill, 1.5)
 
     elif h>h_max:
-        if gate_state:
-            qs1 = c_1 * orifice_area * pow(2 * g*h, .5)
+        qs1 = c_1 * orifice_area * pow(2 * g*h, .5)
         qs2 = l_spill * c_2 * pow(h-h_spill, 1.5)
         qs3 = (l_crest-l_spill) * c_2 * pow(h-h_max, 1.5)  #!!!!!!!!!!!!!!!!
         

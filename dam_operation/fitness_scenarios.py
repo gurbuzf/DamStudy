@@ -1,3 +1,7 @@
+import numpy as np
+import pandas as pd
+
+
 def FitnessCalculator_Scenario_1_a(sim_data):
     ''' Fitness function for scenario 1(a). The objective functions is composed of 
     only minimizing the discharge at the outlet.
@@ -8,7 +12,6 @@ def FitnessCalculator_Scenario_1_a(sim_data):
     for data in sim_data:
         fitness = 0
         flow = data[0]
-        storage = data[1]
         fitness += 1/flow['0']
         fitnesses = np.append(fitnesses, fitness)
         
@@ -21,6 +24,9 @@ def FitnessCalculator_Scenario_1_b(sim_data):
     
     Note: Dam volume is added into the fitness values
     '''
+
+    order_3 = ['9','36','45','63','90','117','126','144','153','171','198','207','225','234'] 
+    order_4 = ['27', '189', '216', '135', '108']
     fitnesses = np.array([])
     for data in sim_data:
         fitness = 0
@@ -40,12 +46,15 @@ def FitnessCalculator_Scenario_2(sim_data):
     
     Note: Dam volume is added into the fitness values
     '''
+    order_3 = ['9','36','45','63','90','117','126','144','153','171','198','207','225','234'] 
+    order_4 = ['27', '189', '216', '135', '108']
+
     fitnesses = np.array([])
     for data in sim_data:
         fitness = 0
         flow = data[0]
         storage = data[1]
-        fitness += 32.15 / flow['0']
+        fitness += 32.5 / flow['0']
         fitness += 17.5 / flow['81']
         fitness += 17.5 / flow['162']
         dam3_over = (storage[order_3]>200000).values.sum()
@@ -119,14 +128,15 @@ def FitnessCalculator_Scenario_3_b(sim_data):
     Note:Dam overtopping is penalized.
     '''
     global eq235, eq217, eq181, eq73, eq55,eq19
+    order_3 = ['9','36','45','63','90','117','126','144','153','171','198','207','225','234'] 
+    order_4 = ['27', '189', '216', '135', '108']
 
     fitnesses = np.array([])
     for data in sim_data:
         fitness = 0
         flow = data[0]
         storage = data[1]
-        order_3 = ['9','36','45','63','90','117','126','144','153','171','198','207','225','234'] 
-        order_4 = ['27', '189', '216', '135', '108']
+        
         dam3_over = (storage[order_3]>200000).values.sum()
         dam4_over = (storage[order_4]>300000).values.sum()
 
@@ -156,6 +166,7 @@ def Linear_Penalty(penalty, s_max, s_spill):
     a = penalty / (s_spill-s_max)
     b = - a * s_spill
     return a , b
+
 a3, b3 = Linear_Penalty(100, 200000, 162000)
 a4, b4 = Linear_Penalty(100, 300000, 243000)
 
@@ -183,11 +194,11 @@ def FitnessCalculator_Scenario_4(sim_data):
         order_4 = ['27', '189', '216', '135', '108']
         
         for dam_id in order_3:
-            if storage[dam_id].values >162000:
-                fitness += a3*storage[dam_id].values + b3
+            if storage[dam_id] >162000:
+                fitness += a3*storage[dam_id] + b3
         for dam_id in order_4:
-            if storage[dam_id].values >243000:
-                fitness += a4*storage[dam_id].values + b4
+            if storage[dam_id] >243000:
+                fitness += a4*storage[dam_id] + b4
 
         fitness += eq235[0]*flow['8']**2 + eq235[1]*flow['8'] + eq235[2]
         fitness += eq217[0]*flow['26']**2 + eq217[1]*flow['26'] + eq217[2]
@@ -202,5 +213,58 @@ def FitnessCalculator_Scenario_4(sim_data):
         fitness += eq19[0]*flow['197']**2 + eq19[1]*flow['197'] + eq19[2]
         fitness += eq19[0]*flow['234']**2 + eq19[1]*flow['234'] + eq19[2]
 
+        fitnesses = np.append(fitnesses, fitness)
+    return fitnesses
+
+
+def FitnessCalculator_Scenario_5(sim_data, population, previous_state):
+    ''' Fitness function for scenario 4. A concave equation is used to determine fitnesses.
+    The objective is to maintain streamflow at a steady level. This level is the half of 
+    Mean Annual Flood at the location of interest. All the links right downstream of the dams 
+    are used to calculate fitness. 
+
+    As input, use maximum streamflow in the pre-defined lead time.
+    
+    Note: A linear function is used to penalize dam overtopping
+    '''
+    global eq235, eq217, eq181, eq73, eq55, eq19 
+    global a3, b3, a4, b4
+
+    fitnesses = np.array([])
+    i = 0
+    for data in sim_data:
+        fitness = 0
+        flow = data[0]
+        storage = data[1]
+        order_3 = ['9','36','45','63','90','117','126','144','153','171','198','207','225','234'] 
+        order_4 = ['27', '189', '216', '135', '108']
+        
+        for dam_id in order_3:
+            if storage[dam_id] >162000:
+                fitness += a3*storage[dam_id] + b3
+        for dam_id in order_4:
+            if storage[dam_id] >243000:
+                fitness += a4*storage[dam_id] + b4
+
+        fitness += eq235[0]*flow['8']**2 + eq235[1]*flow['8'] + eq235[2]
+        fitness += eq217[0]*flow['26']**2 + eq217[1]*flow['26'] + eq217[2]
+        fitness += eq181[0]*flow['62']**2 + eq181[1]*flow['62'] + eq181[2]
+        fitness += eq73[0]*flow['89']**2 + eq73[1]*flow['89'] + eq73[2]
+        fitness += eq73[0]*flow['170']**2 + eq73[1]*flow['170'] + eq73[2]
+        fitness += eq55[0]*flow['107']**2 + eq55[1]*flow['107'] + eq55[2]
+        fitness += eq55[0]*flow['188']**2 + eq55[1]*flow['188'] + eq55[2]
+        fitness += eq19[0]*flow['35']**2 + eq19[1]*flow['35'] + eq19[2]
+        fitness += eq19[0]*flow['143']**2 + eq19[1]*flow['143'] + eq19[2]
+        fitness += eq19[0]*flow['116']**2 + eq19[1]*flow['116'] + eq19[2]
+        fitness += eq19[0]*flow['197']**2 + eq19[1]*flow['197'] + eq19[2]
+        fitness += eq19[0]*flow['234']**2 + eq19[1]*flow['234'] + eq19[2]
+
+        ref = np.array(previous_state) / 0.25
+        statein = np.array(population[i]) / 0.25
+        diff = np.abs(statein-ref) - 1
+        diff[diff<0] = 0
+        fitness -= np.sum(diff) * 10 # Penalty for unstable state changes
+
+        i += 1
         fitnesses = np.append(fitnesses, fitness)
     return fitnesses

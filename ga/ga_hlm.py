@@ -54,7 +54,7 @@ def MatingPoolSelection(population, fitnesses, n_parents=None, selection='best',
     if n_parents==None: n_parents = np.floor(N/2).astype(int)
 
     if selection == 'best':
-        idx = np.argpartition(fitnesses, -n_parents)[-n_parents:]
+        idx = np.argpartition(fitnesses, - n_parents)[-n_parents:]
         indices = idx[np.argsort((-fitnesses)[idx])]
         # return indices
 
@@ -64,7 +64,7 @@ def MatingPoolSelection(population, fitnesses, n_parents=None, selection='best',
             offset = fitnesses.min()
             fitness_offset = fitnesses + abs(offset)
         total_fitness = np.sum(fitness_offset)
-        #TODO: probaility calculation may results in Error. Sometime P becomes None when total_fitness is zeor
+        #TODO: probaility calculation may results in Error. Sometime P becomes None when total_fitness is zero
         relative_fitness = fitness_offset/total_fitness
         indices = np.random.choice(N, n_parents, p=relative_fitness, replace=False)
 
@@ -75,8 +75,8 @@ def MatingPoolSelection(population, fitnesses, n_parents=None, selection='best',
         while len(indices) < n_parents:
             tournament = np.random.choice(N, k, replace=False)
             idx = np.where(fitnesses == fitnesses[tournament].max())[0] # [0] used since np.where return tuple. 
-            if idx[0] not in indices: # 
-                indices = np.append(indices, idx[0])
+            # if idx[0] not in indices: # 
+            indices = np.append(indices, idx[0])
     elif selection == 'rank':
         ranks = np.zeros(N)
         sort_idx = np.argsort(fitnesses)
@@ -203,10 +203,3 @@ def NewPopulation(parents, offsprings_mutated):
 
     return np.vstack((parents, offsprings_mutated))
 
-
-
-def ModelRuns():
-    '''Returns inputs of FitnessCalculator by running hydrological model 
-        for a given individual (i.e. set of dam states)'''
-
-    return None
