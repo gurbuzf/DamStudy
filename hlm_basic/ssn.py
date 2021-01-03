@@ -116,3 +116,21 @@ def UpstreamArea(a_hill, connectivity, h_order):
     A_i = (a_hill*area).astype(np.float32)
     return A_i
     
+def CalculateWidthFinction(connectivity, length):
+    ''' Returns the pair of the distance from outlet and number of links at that distance
+    
+    USE ONLY WHEN CHANNEL LENGTH IS EQUAL FOR ALL .
+
+    '''
+    n_hills = len(connectivity) 
+    up_links ={0:0}
+    for i, conn in enumerate(connectivity):
+        for j in conn:
+            up_links[j] = up_links[i]+1
+    width = []
+    for i in range(n_hills):
+        width.append(up_links[i]*length)
+    count = []
+    for w in np.unique(width):
+        count.append((np.array(width)==w).sum())
+    return width, count

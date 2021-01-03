@@ -11,7 +11,7 @@ import pandas as pd
 from scipy.integrate import solve_ivp
 from hlm_basic.hlm_models import Model_190, Model_254, Model_190_dam, Model_254_dam, Model_254_dam_varParam
 from hlm_basic.tools import read_prm, read_rvr
-
+from hlm_basic.hlm_models import dam_q_varParam_varState
 
 global_params_190 = [0.33, 0.2, -0.1, 0.33, 0.2, 2.0425e-06]
                    #v_0 lambda_1 lambda_2 v_h  k_3 k_I_factor h_b S_L  A   B    exponent vb
@@ -206,7 +206,8 @@ class Watershed:
             self.__yi = np.array(q + S_dams.tolist() + s_p + s_t + s_s)
 
     def dam_loc_state(self,states = None):
-        ''' Gets previously given dam ids(link ids where dams are located) and given states and 
+        ''' (Deprecated!!!)
+        Gets previously given dam ids(link ids where dams are located) and given states and 
             convert it into arrays to be able to run the simulations 
         INPUT:
             states:list, a list of states(0 or 1), must follow the order in dam_ids
@@ -258,7 +259,7 @@ class Watershed:
             pass
 
     def init_dam_params256(self, h_spill,h_max, s_max, alpha, diameter, c_1, c_2, l_spill, l_crest):
-        ''' Returns an nested list of dam parameters to be used in the model runs
+        ''' Returns a nested list of dam parameters to be used in the model runs
 
         '''
         H_spill = np.zeros(self.dim)
@@ -384,8 +385,9 @@ class Watershed:
     def Get_Snapshot(self):
         ''' Gets last condition of the states from solve_ivp output
         
-        OUTPUT:
+        Returns:
          For model 191, the order of states q, S, s_p, s_s
+         For model 254, the order of states q, s_p, s_s
          For model 255, the orer of states q, S, s_p, s_t, s_s
         '''
         if self.sol == None:
@@ -397,6 +399,13 @@ class Watershed:
                 s_p = self.sol.y.T[:, 2*self.dim:3*self.dim][-1].tolist()
                 s_s = self.sol.y.T[:, 3*self.dim:4*self.dim][-1].tolist()
                 return q, S, s_p, s_s
+
+            elif self.modeltype == 254:
+                q = self.sol.y.T[:, 0:self.dim][-1].tolist()
+                s_p = self.sol.y.T[:, 1*self.dim:2*self.dim][-1].tolist()
+                s_t = self.sol.y.T[:, 2*self.dim:3*self.dim][-1].tolist()
+                s_s = self.sol.y.T[:, 3*self.dim:4*self.dim][-1].tolist()
+                return q, s_p, s_t, s_s
             
             elif self.modeltype == 255 or self.modeltype==256:
                 q = self.sol.y.T[:, 0:self.dim][-1].tolist()
@@ -405,3 +414,39 @@ class Watershed:
                 s_t = self.sol.y.T[:, 3*self.dim:4*self.dim][-1].tolist()
                 s_s = self.sol.y.T[:, 4*self.dim:5*self.dim][-1].tolist()
                 return q, S, s_p, s_t, s_s
+
+    def CalculateOutflow(self, dam_params, storage):
+        ''' Returns a pandas DataFrame including outflows from the dams
+            WARNING: Use only with model type 256
+
+        Parameters:
+            dam_params: a nested lists, the output of "init_dam_params256" method
+            storage:DataFrame, the output of "Run256" method
+        
+        '''
+        
+        dam_params = [self.__dam] + dam_params
+
+        H_spill = dam_params[1] #Height of the spillway [m]
+        H_max = dam_params[2]  #Height of the dam [m]
+        S_max = dam_params[3]  #Maximum volume of water the dam can hold [m3] 
+        alpha = dam_params[4]   #Exponent for bankfull
+        diam = dam_params[5]    #Diameter of dam orifice [m]
+        C1 = dam_params[6]      #Coefficient for discharge from dam
+        C2 = dam_params[7]      #Coefficient for discharge from dam
+        L_spill = dam_params[8] #Length of the spillway [m].
+        L_crest = dam_params[9]
+
+        outflow = pd.DataFrame(index=storage.index)
+
+        for i in self.dam_ids:
+            idx = self.links.index(i)
+            state = self.__state[idx]
+            height = H_max[idx]*(storage[str(idx)].values/S_max[idx])**alpha[idx] 
+            _outflow = []
+            for hh in height:
+                d = dam_q_varParam_varState(hh,state, H_spill[idx], H_max[idx], diam[idx], C1[idx], C2[idx], L_spill[idx], L_crest[idx])
+                _outflow.append(d)
+            outflow[str(idx)] = _outflow
+            
+        return outflow

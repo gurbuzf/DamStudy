@@ -109,21 +109,21 @@ if __name__ == "__main__":
     S = [100000 for _ in range(n_dams)]
     # continuous simulation
     update = 60 #mins
-    lead_time = 360 # the time window used in optimization procedure 
-    lead_time2 = 60 # the time window checked if there will be any flooding 
+    lead_time = 360 # the time window checked if there will be any flooding 
+    lead_time_opt = 60 # the time window used in optimization procedure 
     t0 = 0
-    states_all = []
+    states_all = [(-60, [1 for _ in range(len(dams))])]
     columns = SSN5.__columns__()
     dc_ga = pd.DataFrame(columns =columns[0])
     st_ga  = pd.DataFrame(columns =columns[1])
-    while t0 < te-lead_time2:
+    while t0 < te-lead_time:
         if t0 !=0:
             q, S, s_p, s_t, s_s = SSN5.Get_Snapshot()
         
         #define initial conditions
         SSN5.initialize(q=q, S=S, s_p=s_p,s_t =s_t, s_s=s_s)
         #check if flooding occurs
-        data = RunSimulation([SSN5,[1 for _ in range(n_dams)] , t0, forcing, dam_params256, lead_time2])
+        data = RunSimulation([SSN5,[1 for _ in range(n_dams)] , t0, forcing, dam_params256, lead_time])
         flow = data[0]
 
         if flow['8']>31.80/2 or flow['26']>30.40/2 or flow['62']>27.4/2 or flow['89']>16.33/2 or flow['170']>16.33/2:
@@ -134,7 +134,7 @@ if __name__ == "__main__":
             while generation<25: # generation
                 results = []
                 for dam_state in population:
-                    sim = RunSimulation([SSN5, dam_state , t0, forcing, dam_params256,lead_time])              
+                    sim = RunSimulation([SSN5, dam_state , t0, forcing, dam_params256,lead_time_opt])              
                     results.append(sim)
                 state_previous = states_all[-1][1]
                 fitnesses = FitnessCalculator_Scenario_3_b(results)
@@ -145,8 +145,8 @@ if __name__ == "__main__":
                 offsprings_mutated = MutateOffspring(offsprings, method='scrample', p=0.10)
                 population = NewPopulation(parents, offsprings_mutated)
                 ##termination
-                if generation > 7:
-                    sub_fitness = fitness_all[-7:]
+                if generation > 8:
+                    sub_fitness = fitness_all[-8:]
                     if len(set(sub_fitness)) == 1:
                         print(f'[+] Search terminated at generation {generation}')
                         break

@@ -268,3 +268,51 @@ def FitnessCalculator_Scenario_5(sim_data, population, previous_state):
         i += 1
         fitnesses = np.append(fitnesses, fitness)
     return fitnesses
+
+def FitnessCalculator_Scenario_6(sim_data, population, previous_state):
+    ''' Fitness function for scenario 6 which is an extension of Scenario 3(b). 
+    A concave equation is used to determine fitnesses.The objective is to maintain streamflow 
+    at a steady level. This level is the half of Mean Annual Flood at the location of interest. 
+    All the links right downstream of the dams are used to calculate fitness. 
+
+    As input, use maximum streamflow in the pre-defined lead time.
+    
+    Note:Dam overtopping is penalized.
+    '''
+    global eq235, eq217, eq181, eq73, eq55,eq19
+    order_3 = ['9','36','45','63','90','117','126','144','153','171','198','207','225','234'] 
+    order_4 = ['27', '189', '216', '135', '108']
+
+    fitnesses = np.array([])
+    i = 0
+    for data in sim_data:
+        fitness = 0
+        flow = data[0]
+        storage = data[1]
+        
+        dam3_over = (storage[order_3]>200000).values.sum()
+        dam4_over = (storage[order_4]>300000).values.sum()
+
+        fitness -= (dam3_over*120 +dam4_over*120)
+        fitness += eq235[0]*flow['8']**2 + eq235[1]*flow['8'] + eq235[2]
+        fitness += eq217[0]*flow['26']**2 + eq217[1]*flow['26'] + eq217[2]
+        fitness += eq181[0]*flow['62']**2 + eq181[1]*flow['62'] + eq181[2]
+        fitness += eq73[0]*flow['89']**2 + eq73[1]*flow['89'] + eq73[2]
+        fitness += eq73[0]*flow['170']**2 + eq73[1]*flow['170'] + eq73[2]
+        fitness += eq55[0]*flow['107']**2 + eq55[1]*flow['107'] + eq55[2]
+        fitness += eq55[0]*flow['188']**2 + eq55[1]*flow['188'] + eq55[2]
+        fitness += eq19[0]*flow['35']**2 + eq19[1]*flow['35'] + eq19[2]
+        fitness += eq19[0]*flow['143']**2 + eq19[1]*flow['143'] + eq19[2]
+        fitness += eq19[0]*flow['116']**2 + eq19[1]*flow['116'] + eq19[2]
+        fitness += eq19[0]*flow['197']**2 + eq19[1]*flow['197'] + eq19[2]
+        fitness += eq19[0]*flow['234']**2 + eq19[1]*flow['234'] + eq19[2]
+        
+        ref = np.array(previous_state) / 0.25
+        statein = np.array(population[i]) / 0.25
+        diff = np.abs(statein-ref) - 1
+        diff[diff<0] = 0
+        fitness -= np.sum(diff) * 10 # Penalty for unstable state changes
+
+        i +=1
+        fitnesses = np.append(fitnesses, fitness)
+    return fitnesses

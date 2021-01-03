@@ -64,9 +64,15 @@ def MatingPoolSelection(population, fitnesses, n_parents=None, selection='best',
             offset = fitnesses.min()
             fitness_offset = fitnesses + abs(offset)
         total_fitness = np.sum(fitness_offset)
-        #TODO: probaility calculation may results in Error. Sometime P becomes None when total_fitness is zero
+        #TODO: probaility calculation may results in Error. Sometime P becomes None when total_fitness is zero #DONE!
         relative_fitness = fitness_offset/total_fitness
-        indices = np.random.choice(N, n_parents, p=relative_fitness, replace=False)
+        relative_fitness[np.isnan(relative_fitness)] = 0 #set 0 if None value comes out from division
+        try:
+            indices = np.random.choice(N, n_parents, p=relative_fitness, replace=False)
+        except ValueError:
+            relative_fitness[relative_fitness==0]=0.001
+            relative_fitness = relative_fitness/np.sum(relative_fitness)
+            indices = np.random.choice(N, n_parents, p=relative_fitness, replace=False)
 
     elif selection == 'tournament':
         # may get stuck in an infinite loop if there exist multiple same fitness values.
